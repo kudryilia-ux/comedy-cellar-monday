@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comedy Cellar · Monday Night · Split the Bill</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0b08;
+    --surface: #161310;
+    --card: #1c1814;
+    --border: #2e2820;
+    --amber: #e8a020;
+    --amber-dim: #a06a10;
+    --cream: #f0e8d8;
+    --muted: #7a6a55;
+    --green: #4caf7d;
+    --red: #e05a3a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* Grain overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.4;
+  }
+
+  header {
+    text-align: center;
+    padding: 48px 20px 32px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .venue-label {
+    font-family: 'Special Elite', serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--amber);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-family: 'Special Elite', serif;
+    font-size: clamp(28px, 6vw, 48px);
+    color: var(--cream);
+    line-height: 1.1;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    margin-top: 8px;
+  }
+
+  .receipt-meta {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 20px;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .receipt-meta span { border-left: 1px solid var(--border); padding-left: 24px; }
+  .receipt-meta span:first-child { border: none; padding: 0; }
+
+  main {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 32px 16px 0;
+  }
+
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--amber-dim);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .items-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 32px;
+  }
+
+  .item-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--card);
+    border: 1px solid transparent;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    user-select: none;
+  }
+
+  .item-row:hover { border-color: var(--border); background: #201c17; }
+
+  .item-row.selected {
+    border-color: var(--amber);
+    background: #201a0e;
+  }
+
+  .item-row.selected .item-name { color: var(--amber); }
+
+  .checkbox {
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--muted);
+    border-radius: 2px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, background 0.15s;
+  }
+
+  .item-row.selected .checkbox {
+    background: var(--amber);
+    border-color: var(--amber);
+  }
+
+  .checkmark {
+    display: none;
+    width: 10px;
+    height: 10px;
+    color: #0d0b08;
+  }
+
+  .item-row.selected .checkmark { display: block; }
+
+  .item-name {
+    flex: 1;
+    font-size: 12px;
+    color: var(--cream);
+    letter-spacing: 0.05em;
+    transition: color 0.15s;
+  }
+
+  .item-qty {
+    font-size: 10px;
+    color: var(--muted);
+    margin-right: 4px;
+  }
+
+  .item-price {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  .item-row.selected .item-price { color: var(--cream); }
+
+  /* Summary card */
+  .summary {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 24px;
+    position: sticky;
+    bottom: 16px;
+  }
+
+  .summary-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    padding: 5px 0;
+    letter-spacing: 0.05em;
+  }
+
+  .summary-line.total {
+    color: var(--cream);
+    font-size: 18px;
+    font-weight: 500;
+    padding-top: 12px;
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .summary-line.total span:last-child { color: var(--amber); }
+
+  .empty-state {
+    text-align: center;
+    padding: 20px 0;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  .venmo-btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    background: var(--amber);
+    color: #0d0b08;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 16px;
+  }
+
+  .venmo-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .venmo-btn:active { transform: translateY(0); }
+  .venmo-btn:disabled, .venmo-btn.disabled {
+    background: var(--border);
+    color: var(--muted);
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
+  }
+
+  .note-text {
+    font-size: 9px;
+    color: var(--muted);
+    text-align: center;
+    margin-top: 10px;
+    letter-spacing: 0.08em;
+    line-height: 1.6;
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 28px 0;
+  }
+
+  /* Category pill */
+  .cat-food { }
+  .cat-drink { }
+
+  .item-category {
+    font-size: 8px;
+    padding: 2px 6px;
+    border-radius: 2px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .cat-food-pill { background: #1e2e1e; color: #4caf7d; }
+  .cat-drink-pill { background: #2a1e10; color: #e8a020; }
+  .cat-cover-pill { background: #1e1a2a; color: #9580c8; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="venue-label">Comedy Cellar · 117 MacDougal St, NYC</div>
+  <h1>Monday Night<br>Bill Split</h1>
+  <div class="subtitle">Apr 6, 2026 · Table 166 · 8 guests</div>
+  <div class="receipt-meta">
+    <span>Subtotal $472.00</span>
+    <span>Tax $41.89</span>
+    <span>Tip $100.00</span>
+    <span>Total $613.89</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="section-label">Select what you ordered</div>
+
+  <div class="items-grid" id="itemsGrid">
+    <!-- Food -->
+    <div class="item-row" data-price="15.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-food-pill">food</span>
+      <span class="item-name">Wings Single</span>
+      <span class="item-price">$15.00</span>
+    </div>
+    <div class="item-row" data-price="26.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-food-pill">food</span>
+      <span class="item-name">Chicken Kebab</span>
+      <span class="item-price">$26.00</span>
+    </div>
+    <div class="item-row" data-price="18.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-food-pill">food</span>
+      <span class="item-name">Garlic Shrimp</span>
+      <span class="item-price">$18.00</span>
+    </div>
+    <div class="item-row" data-price="10.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-food-pill">food</span>
+      <span class="item-name">Mozz. Sticks</span>
+      <span class="item-price">$10.00</span>
+    </div>
+    <!-- Drinks -->
+    <div class="item-row" data-price="12.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Tequila</span>
+      <span class="item-price">$12.00</span>
+    </div>
+    <div class="item-row" data-price="12.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Tequila</span>
+      <span class="item-price">$12.00</span>
+    </div>
+    <div class="item-row" data-price="14.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Tito's</span>
+      <span class="item-price">$14.00</span>
+    </div>
+    <div class="item-row" data-price="14.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Tito's</span>
+      <span class="item-price">$14.00</span>
+    </div>
+    <div class="item-row" data-price="14.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Tito's</span>
+      <span class="item-price">$14.00</span>
+    </div>
+    <div class="item-row" data-price="14.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Tito's</span>
+      <span class="item-price">$14.00</span>
+    </div>
+    <div class="item-row" data-price="16.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Passion Heat</span>
+      <span class="item-price">$16.00</span>
+    </div>
+    <div class="item-row" data-price="16.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Passion Heat</span>
+      <span class="item-price">$16.00</span>
+    </div>
+    <div class="item-row" data-price="16.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Passion Heat</span>
+      <span class="item-price">$16.00</span>
+    </div>
+    <div class="item-row" data-price="16.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Passion Heat</span>
+      <span class="item-price">$16.00</span>
+    </div>
+    <div class="item-row" data-price="13.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Sailor Jerry</span>
+      <span class="item-price">$13.00</span>
+    </div>
+    <div class="item-row" data-price="11.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Glass Pinot Grigio</span>
+      <span class="item-price">$11.00</span>
+    </div>
+    <div class="item-row" data-price="11.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Glass Pinot Grigio</span>
+      <span class="item-price">$11.00</span>
+    </div>
+    <div class="item-row" data-price="12.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Rum</span>
+      <span class="item-price">$12.00</span>
+    </div>
+    <div class="item-row" data-price="12.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Rum</span>
+      <span class="item-price">$12.00</span>
+    </div>
+    <div class="item-row" data-price="8.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Blue Moon</span>
+      <span class="item-price">$8.00</span>
+    </div>
+    <div class="item-row" data-price="13.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Jack Daniels</span>
+      <span class="item-price">$13.00</span>
+    </div>
+    <div class="item-row" data-price="13.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Jack Daniels</span>
+      <span class="item-price">$13.00</span>
+    </div>
+    <div class="item-row" data-price="13.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Jack Daniels</span>
+      <span class="item-price">$13.00</span>
+    </div>
+    <div class="item-row" data-price="13.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Jack Daniels</span>
+      <span class="item-price">$13.00</span>
+    </div>
+    <div class="item-row" data-price="4.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Diet Coke</span>
+      <span class="item-price">$4.00</span>
+    </div>
+    <div class="item-row" data-price="16.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-drink-pill">drink</span>
+      <span class="item-name">Wildberry Martini</span>
+      <span class="item-price">$16.00</span>
+    </div>
+    <!-- Cover -->
+    <div class="item-row" data-price="15.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-cover-pill">cover</span>
+      <span class="item-name">Show Ticket (NDP)</span>
+      <span class="item-price">$15.00</span>
+    </div>
+    <div class="item-row" data-price="15.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-cover-pill">cover</span>
+      <span class="item-name">Show Ticket (NDP)</span>
+      <span class="item-price">$15.00</span>
+    </div>
+    <div class="item-row" data-price="15.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-cover-pill">cover</span>
+      <span class="item-name">Show Ticket (NDP)</span>
+      <span class="item-price">$15.00</span>
+    </div>
+    <div class="item-row" data-price="15.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-cover-pill">cover</span>
+      <span class="item-name">Show Ticket (NDP)</span>
+      <span class="item-price">$15.00</span>
+    </div>
+    <div class="item-row" data-price="15.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-cover-pill">cover</span>
+      <span class="item-name">Show Ticket (NDP)</span>
+      <span class="item-price">$15.00</span>
+    </div>
+    <div class="item-row" data-price="15.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-cover-pill">cover</span>
+      <span class="item-name">Show Ticket (NDP)</span>
+      <span class="item-price">$15.00</span>
+    </div>
+    <div class="item-row" data-price="15.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-cover-pill">cover</span>
+      <span class="item-name">Show Ticket (NDP)</span>
+      <span class="item-price">$15.00</span>
+    </div>
+    <div class="item-row" data-price="15.00" onclick="toggle(this)">
+      <div class="checkbox"><svg class="checkmark" viewBox="0 0 10 10" fill="currentColor"><path d="M1.5 5l2.5 2.5 4.5-4.5" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <span class="item-category cat-cover-pill">cover</span>
+      <span class="item-name">Show Ticket (NDP)</span>
+      <span class="item-price">$15.00</span>
+    </div>
+  </div>
+
+  <div class="summary" id="summary">
+    <div class="empty-state" id="emptyState">← select your items above</div>
+    <div id="summaryLines" style="display:none">
+      <div class="summary-line"><span>Items</span><span id="sumItems">$0.00</span></div>
+      <div class="summary-line"><span>Tax (proportional share)</span><span id="sumTax">$0.00</span></div>
+      <div class="summary-line"><span>Tip share ($100 total)</span><span id="sumTip">$0.00</span></div>
+      <div class="summary-line total"><span>YOUR TOTAL</span><span id="sumTotal">$0.00</span></div>
+    </div>
+    <a id="venmoBtn" class="venmo-btn disabled" href="#" onclick="return false;">Pay Ilia on Venmo</a>
+    <p class="note-text">Opens Venmo with amount pre-filled · @ilia-kudryavtsev</p>
+  </div>
+
+</main>
+
+<script>
+  const SUBTOTAL = 472.00;
+  const TAX = 41.89;
+  const TIP = 100.00;
+  const TOTAL = SUBTOTAL + TAX + TIP; // 613.89
+  const VENMO = 'ilia-kudryavtsev';
+
+  function toggle(el) {
+    el.classList.toggle('selected');
+    update();
+  }
+
+  function fmt(n) { return '$' + n.toFixed(2); }
+
+  function update() {
+    const selected = document.querySelectorAll('.item-row.selected');
+    const itemsTotal = Array.from(selected).reduce((s, el) => s + parseFloat(el.dataset.price), 0);
+    const ratio = itemsTotal / SUBTOTAL;
+    const taxShare = ratio * TAX;
+    const tipShare = ratio * TIP;
+    const grandTotal = itemsTotal + taxShare + tipShare;
+
+    const empty = document.getElementById('emptyState');
+    const lines = document.getElementById('summaryLines');
+    const btn = document.getElementById('venmoBtn');
+
+    if (selected.length === 0) {
+      empty.style.display = 'block';
+      lines.style.display = 'none';
+      btn.classList.add('disabled');
+      btn.href = '#';
+      btn.onclick = () => false;
+      return;
+    }
+
+    empty.style.display = 'none';
+    lines.style.display = 'block';
+    document.getElementById('sumItems').textContent = fmt(itemsTotal);
+    document.getElementById('sumTax').textContent = fmt(taxShare);
+    document.getElementById('sumTip').textContent = fmt(tipShare);
+    document.getElementById('sumTotal').textContent = fmt(grandTotal);
+
+    const amount = grandTotal.toFixed(2);
+    const note = encodeURIComponent('Comedy Cellar Monday Apr 6 🎤');
+    const url = `https://venmo.com/${VENMO}?txn=pay&amount=${amount}&note=${note}`;
+    btn.href = url;
+    btn.onclick = null;
+    btn.classList.remove('disabled');
+    btn.textContent = `Pay Ilia · ${fmt(grandTotal)}`;
+  }
+</script>
+</body>
+</html>
