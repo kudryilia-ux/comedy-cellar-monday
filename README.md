@@ -47,3 +47,4 @@ https://venmo.com/ilia-kudryavtsev?txn=pay&amount=<YOUR_TOTAL>&note=Comedy%20Cel
 ```
 
 The amount is calculated client-side and injected into the URL — no server, no data sent anywhere.
+
