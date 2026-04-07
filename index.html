@@ -279,6 +279,25 @@
   .cat-food-pill { background: #1e2e1e; color: #4caf7d; }
   .cat-drink-pill { background: #2a1e10; color: #e8a020; }
   .cat-cover-pill { background: #1e1a2a; color: #9580c8; }
+
+  .item-row.claimed {
+    opacity: 0.38;
+    cursor: not-allowed;
+  }
+
+  .item-row.claimed .item-name {
+    text-decoration: line-through;
+    color: var(--muted);
+  }
+
+  .item-row.claimed::after {
+    content: 'claimed';
+    font-size: 8px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
 </style>
 </head>
 <body>
@@ -531,6 +550,7 @@
   const VENMO = 'ilia-kudryavtsev';
 
   function toggle(el) {
+    if (el.classList.contains('claimed')) return;
     el.classList.toggle('selected');
     update();
   }
@@ -572,6 +592,20 @@
     btn.onclick = null;
     btn.classList.remove('disabled');
     btn.textContent = `Pay Ilia · ${fmt(grandTotal)}`;
+  }
+
+  // Apply claimed state for any items marked data-claimed="true"
+  document.querySelectorAll('.item-row[data-claimed="true"]').forEach(el => {
+    el.classList.add('claimed');
+  });
+
+  // Auto-select the first non-claimed Show Ticket on page load
+  const firstTicket = Array.from(document.querySelectorAll('.item-row')).find(
+    el => el.querySelector('.cat-cover-pill') && !el.classList.contains('claimed')
+  );
+  if (firstTicket) {
+    firstTicket.classList.add('selected');
+    update();
   }
 </script>
 </body>
