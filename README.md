@@ -5,9 +5,26 @@ A static single-page app for splitting the bill from a Comedy Cellar outing on *
 ## How to use
 
 1. Open `index.html` in any browser (no server needed).
-2. Tap each item you ordered — food, drinks, and/or your show ticket. Selected items highlight in amber.
-3. A summary card at the bottom shows your items subtotal, your proportional tax and tip, and your grand total.
-4. Tap **Pay Ilia on Venmo** — it opens Venmo with the amount and memo pre-filled.
+2. Your show ticket is auto-selected when the page loads.
+3. Tap any additional items you ordered — food and drinks. Selected items highlight in amber.
+4. A summary card at the bottom shows your items subtotal, your proportional tax and tip, and your grand total.
+5. Tap **Pay Ilia on Venmo** — it opens Venmo with the amount and memo pre-filled.
+
+## Item categories
+
+Each item is labeled with a colored category pill:
+
+- **food** (green) — food items
+- **drink** (amber) — alcoholic and non-alcoholic drinks
+- **cover** (purple) — show tickets
+
+## Claimed items
+
+Items marked as already claimed are **greyed out** with a strikethrough and a `claimed` label. They cannot be selected. This is used when someone has already paid for a specific item and it should be excluded from further splitting.
+
+## Auto-select
+
+The first unclaimed show ticket is automatically selected when the page loads, since every guest owes the cover charge. You can deselect it if needed.
 
 ## Bill-splitting logic
 
@@ -47,4 +64,3 @@ https://venmo.com/ilia-kudryavtsev?txn=pay&amount=<YOUR_TOTAL>&note=Comedy%20Cel
 ```
 
 The amount is calculated client-side and injected into the URL — no server, no data sent anywhere.
-
