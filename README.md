@@ -18,13 +18,19 @@ Each item is labeled with a colored category pill:
 - **drink** (amber) — alcoholic and non-alcoholic drinks
 - **cover** (purple) — show tickets
 
-## Claimed items
-
-Items marked as already claimed are **greyed out** with a strikethrough and a `claimed` label. They cannot be selected. This is used when someone has already paid for a specific item and it should be excluded from further splitting.
-
 ## Auto-select
 
-The first unclaimed show ticket is automatically selected when the page loads, since every guest owes the cover charge. You can deselect it if needed.
+The first show ticket is automatically selected when the page loads, since every guest owes the cover charge. You can deselect it if needed.
+
+## Limitations
+
+This is a **static HTML file with no backend**. There is no server, database, or shared state between users. Each person who opens the page gets a fresh copy — selections made by one person are invisible to everyone else.
+
+Because of this, there is no "greyed out / claimed" functionality. The concept would be: once someone pays for an item, it gets greyed out so others can't accidentally select it too. But making that work would require:
+
+1. **A backend or database** (e.g. Firebase, Supabase, a simple API) to persist which items have been claimed.
+2. **Real-time sync** so that when one user claims items, every other open browser tab updates automatically (via WebSockets or polling).
+3. **A clear trigger point** — the most natural moment to mark items as claimed is when the Venmo button is tapped, but Venmo provides no payment confirmation callback, so the app would have to trust that the user actually paid.
 
 ## Bill-splitting logic
 
